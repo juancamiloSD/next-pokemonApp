@@ -4,7 +4,7 @@ import { Other, Pokemon, PokemonListResponse, Sprites, Stat, Type } from "@/inte
 import { Button, Card, Container, Grid, Image, Text } from "@nextui-org/react"
 import { GetStaticPaths, GetStaticProps, NextPage } from "next"
 import { localFavorites } from "@/utils"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import confetti from 'canvas-confetti'
 import getPokemonInfo from "@/utils/getPokemonInfo"
 
@@ -14,10 +14,15 @@ interface Props {
 
 const PokemonByNamePage: NextPage<Props> = ({ pokemon }) => {    
 
-    const [isInFavorites, setIsInFavorites] = useState( localFavorites.existFavorites( pokemon.id) )
         
+    const [isInFavorites, setIsInFavorites] = useState( false )
+        
+    useEffect(() => {
+        setIsInFavorites(localFavorites.existFavorites( pokemon.id ))
+    }, [])
+
     const onToggleFavorite = () => {
-        localFavorites.toggleFavorites(pokemon.id)
+        localFavorites.toggleFavorites( pokemon.id )
         setIsInFavorites( !isInFavorites )
         if( isInFavorites ) return
 
@@ -83,9 +88,9 @@ const PokemonByNamePage: NextPage<Props> = ({ pokemon }) => {
                                 <Button
                                     color="gradient"
                                     ghost={ !isInFavorites }
-                                    onClick={ onToggleFavorite }
+                                    onPress={ onToggleFavorite }
                                 >
-                                    { isInFavorites ? 'En favoritos' : 'Guardar en favoritos' }
+                                   { isInFavorites ? 'En favoritos' : 'Guardar en favoritos' }
                                     
                                 </Button>
                             </Card.Header>
@@ -135,7 +140,8 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
         paths: pokeName.map( name => ({
             params: { name }
         })),
-        fallback: false
+        // fallback: false
+        fallback: 'blocking'
     }
 }
 
@@ -143,9 +149,20 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
     const { name } = params as { name: string }
 
+    const pokemon = await getPokemonInfo(name)
+
+    if(!pokemon){
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
+
     return {
       props: {
-        pokemon: await getPokemonInfo(name)
+        pokemon
       }
     }
   }

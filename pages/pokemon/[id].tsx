@@ -3,7 +3,7 @@ import { Pokemon } from "@/interfaces"
 import { Button, Card, Container, Grid, Image, Text } from "@nextui-org/react"
 import { GetStaticPaths, GetStaticProps, NextPage } from "next"
 import { localFavorites } from "@/utils"
-import { useState } from "react"
+import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti'
 import getPokemonInfo from "@/utils/getPokemonInfo"
 
@@ -13,10 +13,15 @@ interface Props {
 
 const PokemonPage: NextPage<Props> = ({ pokemon }) => {    
 
-    const [isInFavorites, setIsInFavorites] = useState( localFavorites.existFavorites(pokemon.id) )
+    const [isInFavorites, setIsInFavorites] = useState( false )
         
+    useEffect(() => {
+        setIsInFavorites(localFavorites.existFavorites( pokemon.id ))
+    }, [])
+    
+
     const onToggleFavorite = () => {
-        localFavorites.toggleFavorites(pokemon.id)
+        localFavorites.toggleFavorites( pokemon.id )
         setIsInFavorites( !isInFavorites )
         if( isInFavorites ) return
 
@@ -82,7 +87,7 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
                                 <Button
                                     color="gradient"
                                     ghost={ !isInFavorites }
-                                    onClick={ onToggleFavorite }
+                                    onPress={ onToggleFavorite }
                                 >
                                     { isInFavorites ? 'En favoritos' : 'Guardar en favoritos' }
                                     
@@ -93,10 +98,10 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
                                 <Grid xs={ 12 } sm={ 6 } md={ 6 }>
                                     <Card>
                                         <Container>
-                                            <Text size={30}>Estadisticas:</Text>
+                                            <Text h2 size={30}>Estadisticas:</Text>
                                             { 
                                                 pokemon.stats.map( ({base_stat, stat}) => (
-                                                    <Text key={ stat.name } transform="capitalize">{ stat.name }: { base_stat }</Text>
+                                                    <Text key={ stat.name } h5 transform="capitalize">{ stat.name }: { base_stat }</Text>
                                                 ))
                                             }
                                         </Container>
@@ -105,10 +110,10 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
                                 <Grid xs={ 12 } sm={ 6 } md={ 6 }>
                                     <Card>
                                         <Container>
-                                            <Text size={30}>Tipos:</Text>
+                                            <Text h2 size={30} >Tipos:</Text>
                                             { 
                                                 pokemon.types.map( ({ type }) => (
-                                                    <Text key={ type.name } transform="capitalize">{ type.name }</Text>
+                                                    <Text key={ type.name } h5 transform="capitalize">{ type.name }</Text>
                                                 ))
                                             }
                                         </Container>
@@ -125,6 +130,7 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 }
 
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
+// getStaticPaths necesita siempre a getStaticProps
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
     const pokemons151 = [...Array(151)].map( (value, index) => `${ index + 1 }`)
@@ -133,18 +139,32 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
         paths: pokemons151.map( id => ({
             params: { id }
         })),
-        fallback: false
+        // fallback: false
+        fallback: 'blocking'
     }
 }
 
+// getStaticProps no necesita a getStaticPaths
 export const getStaticProps: GetStaticProps = async ({ params }) => {
 
     const { id } = params as { id: string }
     
+    const pokemon = await getPokemonInfo(id)
+
+    if(!pokemon){
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
+
     return {
       props: {
-        pokemon: await getPokemonInfo(id)
-      }
+        pokemon
+      },
+      revalidate: 10
     }
   }
 
