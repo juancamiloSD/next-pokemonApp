@@ -88,7 +88,7 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
                                     
                                 </Button>
                             </Card.Header>
-                            {/* <Card.Body>
+                            <Card.Body>
                                 <Grid.Container css={{ marginTop: '5px' }} gap={ 2 }>
                                 <Grid xs={ 12 } sm={ 6 } md={ 6 }>
                                     <Card>
@@ -115,7 +115,7 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
                                     </Card>
                                 </Grid>
                                 </Grid.Container>
-                            </Card.Body> */}
+                            </Card.Body>
                         </Card>
                     </Grid>
                 </Grid.Container>
@@ -127,7 +127,7 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
-    const pokemons151 = [...Array(151)].map( (index) => `${ index + 1 }`)
+    const pokemons151 = [...Array(151)].map( (value, index) => `${ index + 1 }`)
 
     return {
         paths: pokemons151.map( id => ({
